@@ -1,0 +1,50 @@
+# Docker Version: 19.03.13
+# Docker Compose Version: 1.27.4
+
+version: "3.7"
+services:
+  ###############redis-master###############
+  redis-master:
+    image: redis:6.0.9
+    container_name: "redis"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    # networks:
+    #   - app-tier
+    expose:
+      - "6379"
+    network_mode: host
+
+  ###############Redis-sentinel###############
+  sentinel:
+    image: bitnami/redis-sentinel:5.0.10
+    container_name: "sentinel"
+    expose:
+      - "26379"
+    network_mode: host
+    environment:
+      - REDIS_MASTER_HOST=172.0.0.1
+
+
+  ###############node###############
+  node:
+    container_name: "node"
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - sentinel
+    command: bash -c "node app.js"
+    expose:
+      - "3000"
+    stdin_open: true
+    network_mode: host  
+    restart: on-failure:2
+
+
+
+
+
+
